@@ -1,0 +1,55 @@
+// Prisma schema for Adlancer
+// Database: PostgreSQL (for production)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  telegramId  String?  @unique
+  name        String
+  email       String?  @unique
+  points      Int      @default(0)
+  status      String   @default("Active") // 'Active' | 'Banned'
+  joined      DateTime @default(now())
+  isAdmin     Boolean  @default(false)
+  password    String?  // Only for admin users
+  Withdrawals Withdrawal[]
+  ReferralsAsReferrer Referral[] @relation("Referrer")
+  ReferralsAsReferred Referral[] @relation("Referred")
+  AdWatches   AdWatch[]
+}
+
+model Withdrawal {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  points    Int
+  method    String
+  details   String
+  status    String   @default("Pending") // 'Pending' | 'Approved' | 'Denied'
+  date      DateTime @default(now())
+}
+
+model Referral {
+  id          String   @id @default(uuid())
+  referrerId  String
+  referredId  String  @unique
+  referrer    User    @relation("Referrer", fields: [referrerId], references: [id])
+  referred    User    @relation("Referred", fields: [referredId], references: [id])
+  date        DateTime @default(now())
+}
+
+model AdWatch {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  pointsEarned Int
+  date         DateTime @default(now())
+}
